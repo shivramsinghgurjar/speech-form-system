@@ -37,8 +37,21 @@ export default function Home() {
         payload ||
         {};
 
-      if (extractedData && typeof extractedData === "object" && Object.keys(extractedData).length > 0) {
-        setFormData(extractedData);
+      const normalizedData = {
+        name: "",
+        systemid: "",
+        rollnumber: "",
+        year: "",
+        program: "",
+        branch: "",
+        passingyear: "",
+        ...extractedData,
+      };
+
+      console.log("Extracted data:", extractedData);
+
+      if (Object.keys(extractedData).length > 0) {
+        setFormData(normalizedData);
       } else {
         setError("❌ No extractable fields found. Try a more precise grammar like: my name is ..., system id is ..., roll number is ..., etc.");
       }
@@ -60,10 +73,29 @@ export default function Home() {
       return;
     }
 
+    console.log('Submitting formData:', formData); // debug
+
     setIsLoading(true);
     setError("");
     try {
-      const res = await saveForm(formData);
+      // Ensure we push exactly the normalized format
+      const payload = {
+        source: "speech-form",
+        transcription: text || "",
+        extractedData: formData,
+        name: formData.name || "",
+        systemid: formData.systemid || "",
+        rollnumber: formData.rollnumber || "",
+        year: formData.year || "",
+        program: formData.program || "",
+        branch: formData.branch || "",
+        passingyear: formData.passingyear || "",
+      };
+      console.log('saveForm payload:', payload); // debug
+
+      const res = await saveForm(payload);
+
+      console.log('saveForm response:', res.data); // debug
 
       if (res.data) {
         setSuccessMessage("✅ Form submitted successfully! Your data has been saved.");
@@ -93,33 +125,8 @@ export default function Home() {
     }
   }, [successMessage]);
 
-  const handleClr = async () => {
-    if (!formData || Object.keys(formData).length === 0) {
-      setError("📋 Please extract data first!");
-      return;
-    }
-
-    setIsLoading(true);
-    setError("");
-    try {
-      const res = await saveForm(formData);
-
-      if (res.data) {
-        setSuccessMessage("✅ Form submitted successfully! Your data has been saved.");
-        setTimeout(() => {
-          handleClearAll();
-        }, 2000);
-      }
-    } catch (err) {
-      console.error("Save error:", err);
-      setError(
-        err.response?.data?.error ||
-          err.message ||
-          "❌ Failed to save form. Please try again."
-      );
-    } finally {
-      setIsLoading(false);
-    }
+  const handleClr = () => {
+    handleClearAll();
   };
 
   const handleClearAll = () => {
@@ -245,7 +252,7 @@ export default function Home() {
             {Object.keys(formData).length > 0 && (
               <div className="mt-6 flex gap-4">
                 <button
-                  onClick={handleClr}
+                  onClick={handleSubmit}
                   disabled={isLoading}
                   className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
                 >
