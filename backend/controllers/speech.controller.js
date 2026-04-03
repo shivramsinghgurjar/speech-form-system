@@ -16,11 +16,8 @@ export const extractKeywords = async (req, res) => {
       text: text.trim(),
     });
 
-    // Return extracted data
-    return res.json({
-      success: true,
-      data: response.data,
-    });
+    // Return extracted data exactly as AI layer returns (avoid nested wrappers)
+    return res.json(response.data);
   } catch (err) {
     console.error("AI Service Error:", err.message);
 
